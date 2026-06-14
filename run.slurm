@@ -16,8 +16,10 @@ echo "=== Rozpoczęcie zadania: $(date) ==="
 
 # Kompilacja programu
 echo "Kompilowanie źródeł..."
-make clean
-make
+rm -f bucket_sort_seq bucket_sort_async
+gcc -Wall -Wextra -O3 -std=gnu11 src/main.c src/bucket_sort.c src/utils.c -o bucket_sort_seq
+
+# gcc -Wall -Wextra -O3 -std=gnu11 -fopenmp src/main.c src/bucket_sort.c src/utils.c -o bucket_sort_async
 
 # Generowanie pliku testowego używając /dev/urandom
 # Generujemy czyste losowe bajty, co w C zostanie zinterpretowane jako liczby całkowite.
