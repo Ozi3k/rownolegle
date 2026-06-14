@@ -24,7 +24,7 @@ std::vector<int> load(const std::string& filepath) {
     return buffer;
 }
 
-void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
+void parallelBucketSort(std::vector<int>& arr, size_t num_buckets) {
     size_t n = arr.size();
     if (n <= 1) return;
 
@@ -46,7 +46,7 @@ void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
     }
     if (min_val == max_val) return;
 
-    int num_threads = omp_get_max_threads();
+    size_t num_threads = omp_get_max_threads();
     std::vector<std::vector<std::vector<int>>> local_buckets(num_threads, std::vector<std::vector<int>>(num_buckets));
 
     // PREALOKACJA dla wątków lokalnych
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filepath = argv[1];
-    int num_buckets;
+    size_t num_buckets;
     
     try {
         num_buckets = std::stoi(argv[2]);

@@ -24,7 +24,7 @@ std::vector<int> load(const std::string& filepath) {
     return buffer;
 }
 
-void sequentialBucketSort(std::vector<int>& arr, int num_buckets) {
+void sequentialBucketSort(std::vector<int>& arr, size_t num_buckets) {
     size_t n = arr.size();
     if (n <= 1) return;
 
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string filepath = argv[1];
-    int num_buckets;
+    size_t num_buckets;
     
     try {
         num_buckets = std::stoi(argv[2]);
