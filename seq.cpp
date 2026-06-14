@@ -2,7 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
-#include <omp.h>
+#include <chrono>   
 #include <fstream>
 
 std::vector<int> load(const std::string& filepath) {
@@ -78,13 +78,14 @@ int main(int argc, char* argv[]) {
     try {
         std::vector<int> data = load(filepath);
 
-        double startCouting = omp_get_wtime(); 
+        auto startCounting = std::chrono::high_resolution_clock::now(); 
         
         sequentialBucketSort(data, num_buckets);
         
-        double stopVal = omp_get_wtime();
+        auto stopVal = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = stopVal - startCounting;
         
-        std::cout << "Czas wykonania: " << stopVal - startCouting << " s" << std::endl;
+        std::cout << "Czas wykonania: " << elapsed.count() << " s" << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << "Wystapil blad krytyczny: " << e.what() << "\n";
