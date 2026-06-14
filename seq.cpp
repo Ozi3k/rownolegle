@@ -25,12 +25,12 @@ std::vector<int> load(const std::string& filepath) {
 }
 
 void sequentialBucketSort(std::vector<int>& arr, int num_buckets) {
-    int n = arr.size();
+    size_t n = arr.size();
     if (n <= 1) return;
 
     int min_val = arr[0];
     int max_val = arr[0];
-    for (int i = 1; i < n; i++) {
+    for (size_t i = 1; i < n; i++) {
         if (arr[i] < min_val) min_val = arr[i];
         if (arr[i] > max_val) max_val = arr[i];
     }
@@ -41,17 +41,17 @@ void sequentialBucketSort(std::vector<int>& arr, int num_buckets) {
     long long range = (long long)max_val - min_val;
 
     size_t expected_size = (n / num_buckets) * 1.2;
-    for (int i = 0; i < num_buckets; ++i) {
+    for (size_t i = 0; i < num_buckets; ++i) {
         buckets[i].reserve(expected_size);
     }
 
-    for (int i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++) {
         int bucket_idx = (int)( ((long long)arr[i] - min_val) * (num_buckets - 1) / range );
         buckets[bucket_idx].push_back(arr[i]);
     }
 
-    int idx = 0;
-    for (int b = 0; b < num_buckets; b++) {
+    size_t idx = 0;
+    for (size_t b = 0; b < num_buckets; b++) {
         std::sort(buckets[b].begin(), buckets[b].end());
         for (int val : buckets[b]) {
             arr[idx++] = val;

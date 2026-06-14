@@ -25,7 +25,7 @@ std::vector<int> load(const std::string& filepath) {
 }
 
 void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
-    int n = arr.size();
+    size_t n = arr.size();
     if (n <= 1) return;
 
     int min_val = arr[0], max_val = arr[0];
@@ -34,7 +34,7 @@ void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
         int local_min = min_val;
         int local_max = max_val;
         #pragma omp for nowait
-        for (int i = 0; i < n; i++) {
+        for (size_t i = 0; i < n; i++) {
             if (arr[i] < local_min) local_min = arr[i];
             if (arr[i] > local_max) local_max = arr[i];
         }
@@ -51,8 +51,8 @@ void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
 
     // PREALOKACJA dla wątków lokalnych
     size_t expected_local_size = (n / num_buckets / num_threads) * 1.5; // margines 50% ze względu na odchylenia między wątkami
-    for (int t = 0; t < num_threads; ++t) {
-        for (int b = 0; b < num_buckets; ++b) {
+    for (size_t t = 0; t < num_threads; ++t) {
+        for (size_t b = 0; b < num_buckets; ++b) {
             local_buckets[t][b].reserve(expected_local_size);
         }
     }
@@ -62,7 +62,7 @@ void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
         int tid = omp_get_thread_num();
         long long range = (long long)max_val - min_val;
         #pragma omp for
-        for (int i = 0; i < n; i++) {
+        for (size_t i = 0; i < n; i++) {
             // POPRAWKA KRYTYCZNA: Bezpośrednie rzutowanie arr[i] by uniknąć przepełnienia (overflow)
             int bucket_idx = (int)( ((long long)arr[i] - min_val) * (num_buckets - 1) / range );
             local_buckets[tid][bucket_idx].push_back(arr[i]);
@@ -78,24 +78,24 @@ void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
     }
 
     #pragma omp parallel for
-    for (int b = 0; b < num_buckets; b++) {
-        for (int t = 0; t < num_threads; t++) {
+    for (size_t b = 0; b < num_buckets; b++) {
+        for (size_t t = 0; t < num_threads; t++) {
             buckets[b].insert(buckets[b].end(), local_buckets[t][b].begin(), local_buckets[t][b].end());
         }
     }
 
     #pragma omp parallel for schedule(dynamic)
-    for (int b = 0; b < num_buckets; b++) {
+    for (size_t b = 0; b < num_buckets; b++) {
         std::sort(buckets[b].begin(), buckets[b].end());
     }
 
-    std::vector<int> start_idx(num_buckets, 0);
-    for (int b = 1; b < num_buckets; b++) {
+    std::vector<size_t> start_idx(num_buckets, 0);
+    for (size_t b = 1; b < num_buckets; b++) {
         start_idx[b] = start_idx[b - 1] + buckets[b - 1].size();
     }
 
     #pragma omp parallel for
-    for (int b = 0; b < num_buckets; b++) {
+    for (size_t b = 0; b < num_buckets; b++) {
         int idx = start_idx[b];
         for (int val : buckets[b]) {
             arr[idx++] = val;
