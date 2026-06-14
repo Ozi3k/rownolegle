@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 
         double startCouting = omp_get_wtime(); 
         
-        bucketSort(data, num_buckets);
+        sequentialBucketSort(data, num_buckets);
         
         double stopVal = omp_get_wtime();
         
