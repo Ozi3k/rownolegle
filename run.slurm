@@ -1,7 +1,6 @@
 #!/bin/bash -l
 #SBATCH -N 1
 #SBATCH --exclusive
-#SBATCH -p standard
 #SBATCH -J bucket_sort_benchmark
 #SBATCH -o benchmark_output.txt
 
