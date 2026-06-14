@@ -73,7 +73,7 @@ void parallelBucketSort(std::vector<int>& arr, size_t num_buckets) {
     
     // PREALOKACJA dla kubełków globalnych
     size_t expected_global_size = (n / num_buckets) * 1.2;
-    for (int b = 0; b < num_buckets; ++b) {
+    for (size_t b = 0; b < num_buckets; ++b) {
         buckets[b].reserve(expected_global_size);
     }
 
