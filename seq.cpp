@@ -28,7 +28,6 @@ void sequentialBucketSort(std::vector<int>& arr, int num_buckets) {
     int n = arr.size();
     if (n <= 1) return;
 
-    // 1. Wyszukiwanie wartości minimalnej i maksymalnej
     int min_val = arr[0];
     int max_val = arr[0];
     for (int i = 1; i < n; i++) {
@@ -38,17 +37,19 @@ void sequentialBucketSort(std::vector<int>& arr, int num_buckets) {
 
     if (min_val == max_val) return;
 
-    // 2. Inicjalizacja kubełków
     std::vector<std::vector<int>> buckets(num_buckets);
     long long range = (long long)max_val - min_val;
 
-    // 3. Rozdzielenie elementów do kubełków docelowych
+    size_t expected_size = (n / num_buckets) * 1.2;
+    for (int i = 0; i < num_buckets; ++i) {
+        buckets[i].reserve(expected_size);
+    }
+
     for (int i = 0; i < n; i++) {
-        int bucket_idx = (int)(((long long)(arr[i] - min_val) * (num_buckets - 1)) / range);
+        int bucket_idx = (int)( ((long long)arr[i] - min_val) * (num_buckets - 1) / range );
         buckets[bucket_idx].push_back(arr[i]);
     }
 
-    // 4. Sortowanie poszczególnych kubełków i nadpisywanie oryginalnej tablicy
     int idx = 0;
     for (int b = 0; b < num_buckets; b++) {
         std::sort(buckets[b].begin(), buckets[b].end());

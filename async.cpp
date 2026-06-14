@@ -49,18 +49,34 @@ void parallelBucketSort(std::vector<int>& arr, int num_buckets) {
     int num_threads = omp_get_max_threads();
     std::vector<std::vector<std::vector<int>>> local_buckets(num_threads, std::vector<std::vector<int>>(num_buckets));
 
+    // PREALOKACJA dla wątków lokalnych
+    size_t expected_local_size = (n / num_buckets / num_threads) * 1.5; // margines 50% ze względu na odchylenia między wątkami
+    for (int t = 0; t < num_threads; ++t) {
+        for (int b = 0; b < num_buckets; ++b) {
+            local_buckets[t][b].reserve(expected_local_size);
+        }
+    }
+
     #pragma omp parallel
     {
         int tid = omp_get_thread_num();
         long long range = (long long)max_val - min_val;
         #pragma omp for
         for (int i = 0; i < n; i++) {
-            int bucket_idx = (int)(((long long)(arr[i] - min_val) * (num_buckets - 1)) / range);
+            // POPRAWKA KRYTYCZNA: Bezpośrednie rzutowanie arr[i] by uniknąć przepełnienia (overflow)
+            int bucket_idx = (int)( ((long long)arr[i] - min_val) * (num_buckets - 1) / range );
             local_buckets[tid][bucket_idx].push_back(arr[i]);
         }
     }
 
     std::vector<std::vector<int>> buckets(num_buckets);
+    
+    // PREALOKACJA dla kubełków globalnych
+    size_t expected_global_size = (n / num_buckets) * 1.2;
+    for (int b = 0; b < num_buckets; ++b) {
+        buckets[b].reserve(expected_global_size);
+    }
+
     #pragma omp parallel for
     for (int b = 0; b < num_buckets; b++) {
         for (int t = 0; t < num_threads; t++) {
