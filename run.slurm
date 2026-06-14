@@ -5,43 +5,66 @@
 #SBATCH -J bucket_sort_benchmark
 #SBATCH -o benchmark_output.txt
 
-# Katalog roboczy (zakładamy, że jesteśmy w katalogu z Makefile)
+# Katalog roboczy i ścieżka pliku
 WORK_DIR=$(pwd)
 DATA_FILE="$WORK_DIR/dane_testowe.bin"
+BUCKET_COUNT=10000
 
-# Rozmiar generowanych danych: 2048 bloków po 1MB = 2GB danych
-DATA_SIZE_MB=4096
+# Tablica z rozmiarami do przetestowania (5 GB = 5120 MB, 10 GB = 10240 MB)
+SIZES_MB=(5120 10240)
 
 echo "=== Rozpoczęcie zadania: $(date) ==="
 
-# Kompilacja programu
-echo "Kompilowanie źródeł..."
+# 1. Kompilacja obu wersji
+echo "Kompilowanie źródeł (wersja sekwencyjna i równoległa)..."
 rm -f bucket_sort_seq bucket_sort_async
-gcc -Wall -Wextra -O3 -std=gnu11 src/main.c src/bucket_sort.c src/utils.c -o bucket_sort_seq
 
-# gcc -Wall -Wextra -O3 -std=gnu11 -fopenmp src/main.c src/bucket_sort.c src/utils.c -o bucket_sort_async
+gcc -Wall -Wextra -O3 -std=gnu11 \
+    src/main.c src/bucket_sort.c src/utils.c \
+    -o bucket_sort_seq
 
-# Generowanie pliku testowego używając /dev/urandom
-# Generujemy czyste losowe bajty, co w C zostanie zinterpretowane jako liczby całkowite.
-echo "Generowanie pliku danych ($DATA_SIZE_MB MB)..."
-dd if=/dev/urandom of="$DATA_FILE" bs=1M count=$DATA_SIZE_MB status=progress
+# gcc -Wall -Wextra -O3 -std=gnu11 -fopenmp \
+#     src/main.c src/bucket_sort.c src/utils.c \
+#     -o bucket_sort_async
 
-# Weryfikacja czy plik istnieje i rozmiar
-if [ -f "$DATA_FILE" ]; then
-    echo "Plik wygenerowany pomyślnie."
-else
-    echo "Błąd generowania danych."
-    exit 1
-fi
+# if [[ ! -x bucket_sort_seq || ! -x bucket_sort_async ]]; then
+#     echo "Błąd kompilacji. Przerywam działanie."
+#     exit 1
+# fi
 
-# Uruchomienie wersji sekwencyjnej
-echo "Uruchamianie programu sekwencyjnego..."
-# Jeśli docelowo będziesz testował OpenMP, OMP_NUM_THREADS może zostać nadpisane tutaj:
-export OMP_NUM_THREADS=1 
-./bucket_sort_seq "$DATA_FILE" 10000
+# 2. Główna pętla testowa
+for DATA_SIZE_MB in "${SIZES_MB[@]}"; do
+    
+    echo ""
+    echo "=========================================================="
+    echo "=== ROZPOCZĘCIE CYKLU DLA ROZMIARU: ${DATA_SIZE_MB} MB ==="
+    echo "=========================================================="
 
-# Czyszczenie danych po benchmarku
-echo "Usuwanie pliku wejściowego..."
-rm -f "$DATA_FILE"
+    # Generowanie danych
+    echo "Generowanie pliku danych (${DATA_SIZE_MB} MB)..."
+    dd if=/dev/urandom of="$DATA_FILE" bs=1M count="$DATA_SIZE_MB" status=progress
+
+    if [ ! -f "$DATA_FILE" ]; then
+        echo "Błąd generowania danych dla rozmiaru ${DATA_SIZE_MB} MB."
+        exit 1
+    fi
+
+    # Testowanie wersji sekwencyjnej (baseline)
+    echo "--- Uruchamianie programu sekwencyjnego (${DATA_SIZE_MB} MB) ---"
+    export OMP_NUM_THREADS=1 
+    ./bucket_sort_seq "$DATA_FILE" $BUCKET_COUNT
+
+    # Testowanie wersji równoległej dla 1 do 16 wątków
+    # echo "--- Uruchamianie programu równoległego (${DATA_SIZE_MB} MB) ---"
+    # for THREAD_COUNT in {1..16}; do
+    #     echo " -> Test dla OMP_NUM_THREADS=${THREAD_COUNT}"
+    #     OMP_NUM_THREADS=$THREAD_COUNT ./bucket_sort_async "$DATA_FILE" $BUCKET_COUNT
+    # done
+
+    # Czyszczenie pliku przed kolejną iteracją
+    echo "Usuwanie pliku wejściowego (${DATA_SIZE_MB} MB)..."
+    rm -f "$DATA_FILE"
+
+done
 
 echo "=== Zakończenie zadania: $(date) ==="
