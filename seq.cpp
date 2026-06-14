@@ -24,53 +24,34 @@ std::vector<int> load(const std::string& filepath) {
     return buffer;
 }
 
-void bucketSort(std::vector<int>& arr, int num_buckets) {
+void sequentialBucketSort(std::vector<int>& arr, int num_buckets) {
     int n = arr.size();
     if (n <= 1) return;
 
-    int min_val = arr[0], max_val = arr[0];
-    {
-        int local_min = min_val;
-        int local_max = max_val;
-        for (int i = 0; i < n; i++) {
-            if (arr[i] < local_min) local_min = arr[i];
-            if (arr[i] > local_max) local_max = arr[i];
-        }
-
-        if (local_min < min_val) min_val = local_min;
-        if (local_max > max_val) max_val = local_max;
+    // 1. Wyszukiwanie wartości minimalnej i maksymalnej
+    int min_val = arr[0];
+    int max_val = arr[0];
+    for (int i = 1; i < n; i++) {
+        if (arr[i] < min_val) min_val = arr[i];
+        if (arr[i] > max_val) max_val = arr[i];
     }
+
     if (min_val == max_val) return;
 
-    int num_threads = omp_get_max_threads();
-    std::vector<std::vector<std::vector<int>>> local_buckets(num_threads, std::vector<std::vector<int>>(num_buckets));
-
-    int tid = omp_get_thread_num();
+    // 2. Inicjalizacja kubełków
+    std::vector<std::vector<int>> buckets(num_buckets);
     long long range = (long long)max_val - min_val;
 
+    // 3. Rozdzielenie elementów do kubełków docelowych
     for (int i = 0; i < n; i++) {
         int bucket_idx = (int)(((long long)(arr[i] - min_val) * (num_buckets - 1)) / range);
-        local_buckets[tid][bucket_idx].push_back(arr[i]);
+        buckets[bucket_idx].push_back(arr[i]);
     }
 
-    std::vector<std::vector<int>> buckets(num_buckets);
-    for (int b = 0; b < num_buckets; b++) {
-        for (int t = 0; t < num_threads; t++) {
-            buckets[b].insert(buckets[b].end(), local_buckets[t][b].begin(), local_buckets[t][b].end());
-        }
-    }
-
+    // 4. Sortowanie poszczególnych kubełków i nadpisywanie oryginalnej tablicy
+    int idx = 0;
     for (int b = 0; b < num_buckets; b++) {
         std::sort(buckets[b].begin(), buckets[b].end());
-    }
-
-    std::vector<int> start_idx(num_buckets, 0);
-    for (int b = 1; b < num_buckets; b++) {
-        start_idx[b] = start_idx[b - 1] + buckets[b - 1].size();
-    }
-
-    for (int b = 0; b < num_buckets; b++) {
-        int idx = start_idx[b];
         for (int val : buckets[b]) {
             arr[idx++] = val;
         }
