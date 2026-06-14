@@ -10,7 +10,7 @@ WORK_DIR=$(pwd)
 DATA_FILE="$WORK_DIR/dane_testowe.bin"
 
 # Rozmiar generowanych danych: 2048 bloków po 1MB = 2GB danych
-DATA_SIZE_MB=2048
+DATA_SIZE_MB=4096
 
 echo "=== Rozpoczęcie zadania: $(date) ==="
 
