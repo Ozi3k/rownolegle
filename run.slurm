@@ -19,11 +19,11 @@ echo "=== Rozpoczęcie zadania: $(date) ==="
 echo "Kompilowanie źródeł (wersja sekwencyjna i równoległa)..."
 rm -f bucket_sort_seq bucket_sort_async
 
-gcc -Wall -Wextra -O3 -std=gnu11 \
+g++ -Wall -Wextra -O3 -std=gnu11 \
     seq.cpp \
     -o bucket_sort_seq
 
-gcc -Wall -Wextra -O3 -std=gnu11 -fopenmp \
+g++ -Wall -Wextra -O3 -std=gnu11 -fopenmp \
     async.cpp \
     -o bucket_sort_async
 
