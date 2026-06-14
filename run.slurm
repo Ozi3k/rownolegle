@@ -20,17 +20,17 @@ echo "Kompilowanie źródeł (wersja sekwencyjna i równoległa)..."
 rm -f bucket_sort_seq bucket_sort_async
 
 gcc -Wall -Wextra -O3 -std=gnu11 \
-    src/main.c src/bucket_sort.c src/utils.c \
+    seq.cpp \
     -o bucket_sort_seq
 
-# gcc -Wall -Wextra -O3 -std=gnu11 -fopenmp \
-#     src/main.c src/bucket_sort.c src/utils.c \
-#     -o bucket_sort_async
+gcc -Wall -Wextra -O3 -std=gnu11 -fopenmp \
+    async.cpp \
+    -o bucket_sort_async
 
-# if [[ ! -x bucket_sort_seq || ! -x bucket_sort_async ]]; then
-#     echo "Błąd kompilacji. Przerywam działanie."
-#     exit 1
-# fi
+if [[ ! -x bucket_sort_seq || ! -x bucket_sort_async ]]; then
+    echo "Błąd kompilacji. Przerywam działanie."
+    exit 1
+fi
 
 # 2. Główna pętla testowa
 for DATA_SIZE_MB in "${SIZES_MB[@]}"; do
@@ -55,11 +55,11 @@ for DATA_SIZE_MB in "${SIZES_MB[@]}"; do
     ./bucket_sort_seq "$DATA_FILE" $BUCKET_COUNT
 
     # Testowanie wersji równoległej dla 1 do 16 wątków
-    # echo "--- Uruchamianie programu równoległego (${DATA_SIZE_MB} MB) ---"
-    # for THREAD_COUNT in {1..16}; do
-    #     echo " -> Test dla OMP_NUM_THREADS=${THREAD_COUNT}"
-    #     OMP_NUM_THREADS=$THREAD_COUNT ./bucket_sort_async "$DATA_FILE" $BUCKET_COUNT
-    # done
+    echo "--- Uruchamianie programu równoległego (${DATA_SIZE_MB} MB) ---"
+    for THREAD_COUNT in {1..16}; do
+        echo " -> Test dla OMP_NUM_THREADS=${THREAD_COUNT}"
+        OMP_NUM_THREADS=$THREAD_COUNT ./bucket_sort_async "$DATA_FILE" $BUCKET_COUNT
+    done
 
     # Czyszczenie pliku przed kolejną iteracją
     echo "Usuwanie pliku wejściowego (${DATA_SIZE_MB} MB)..."
